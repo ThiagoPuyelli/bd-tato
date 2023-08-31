@@ -7,7 +7,6 @@
 #include "listasArray.c"
 #include "tipoRegistro.h"
 
-
 void menuCampo ();
 void menuRegistro ();
 void altaRegistro (Lista lista);
@@ -102,7 +101,7 @@ Lista listaCampos() {
 }
 
 void altaRegistro (Lista lista) {
-  char * campos = malloc(sizeof(char*) * l_longitud(lista));
+  char campos[10][10];
   Iterador ite = iterador(lista);
   TipoElemento elemento;
   int i = 0;
@@ -111,7 +110,6 @@ void altaRegistro (Lista lista) {
     elemento = siguiente(ite);
     struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
     printf("Ingrese el %s\n", registro->nombre);
-    campos[i] = malloc(sizeof(char) * registro->cantidad);
     scanf("%s", campos[i]);
     size += (registro->cantidad * sizeof(char));
     i++;
@@ -125,13 +123,13 @@ void mostrarRegistros (Lista lista) {
   FILE * fp = fopen("registros.dat", "rb");
   if (fp) {
     Iterador ite = iterador(lista);
-    char * campo;
+    char campo[10];
     TipoElemento elemento;
     while (!feof(fp)) {
       while (hay_siguiente(ite)) {
         elemento = siguiente(ite);
         struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
-        fread(&campo, sizeof(sizeof(char) * registro->cantidad), 1, fp);
+        fread(&campo, sizeof(sizeof(char) * 10), 1, fp);
         printf("%s: %s %d\n", registro->nombre, campo, registro->cantidad);
       }
       ite = iterador(lista);
