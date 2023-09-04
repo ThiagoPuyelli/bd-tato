@@ -11,8 +11,11 @@ void menuCampo ();
 void menuRegistro ();
 void altaRegistro (Lista lista);
 void bajaRegistro ();
-void modificacionRegistro ();
+void modificacionRegistro (Lista lista);
 void mostrarRegistros (Lista lista);
+void mostrarCampos (Lista lista);
+bool mostrarAtributos (Lista lista, int posicion);
+int tamanioRegistro (Lista lista);
 Lista listaCampos ();
 
 int main () {
@@ -71,7 +74,7 @@ void menuRegistro () {
         //bajaRegistro();
         break;
       case 3:
-        //modificacionRegistro();
+        modificacionRegistro(campos);
         break;
       case 4:
         mostrarRegistros(campos);
@@ -101,39 +104,173 @@ Lista listaCampos() {
 }
 
 void altaRegistro (Lista lista) {
-  char campos[10][10];
   Iterador ite = iterador(lista);
   TipoElemento elemento;
   int i = 0;
   int size = 0;
+
+  while (hay_siguiente(ite)) {
+    elemento = siguiente(ite);
+    struct TipoRegistro *registro = (struct TipoRegistro *)(elemento->valor);
+    size += registro->cantidad;
+  }
+  char ** campos = malloc(sizeof(char *) * size);
+  ite = iterador(lista);
+
   while (hay_siguiente(ite)) {
     elemento = siguiente(ite);
     struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
     printf("Ingrese el %s\n", registro->nombre);
+    campos[i] = malloc(sizeof(char) * (registro->cantidad + 1));
     scanf("%s", campos[i]);
-    size += (registro->cantidad * sizeof(char));
     i++;
   }
-  FILE * fp = fopen("registros.dat", "wb");
-  fwrite(campos, size, i, fp);
+  FILE * fp = fopen("registros.dat", "ab");
+  ite = iterador(lista);
+  for (int j = 0; j < i; j++) {
+    elemento = siguiente(ite);
+    struct TipoRegistro *registro = (struct TipoRegistro *)(elemento->valor);
+    fwrite(campos[j], sizeof(char) * registro->cantidad, 1, fp);
+    free(campos[j]); // Liberar memoria de cada campo
+  }
   fclose(fp);
 }
 
 void mostrarRegistros (Lista lista) {
   FILE * fp = fopen("registros.dat", "rb");
   if (fp) {
-    Iterador ite = iterador(lista);
-    char campo[10];
     TipoElemento elemento;
-    while (!feof(fp)) {
+    int size = tamanioRegistro(lista);
+    fseek(fp, 0, SEEK_END);
+    long sizeFile = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    int cantidad = sizeFile / (size * sizeof(char));
+    Iterador ite = iterador(lista);
+    char * campo;
+    int i = 0;
+    for (int i = 0;i < cantidad;i++) {
       while (hay_siguiente(ite)) {
         elemento = siguiente(ite);
         struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
-        fread(&campo, sizeof(sizeof(char) * 10), 1, fp);
-        printf("%s: %s %d\n", registro->nombre, campo, registro->cantidad);
+        campo = malloc(sizeof(char) * registro->cantidad + 1);
+        fread(campo, sizeof(char) * registro->cantidad, 1, fp);
+        printf("%s: %s\n", registro->nombre, campo);
+        free(campo);
       }
       ite = iterador(lista);
     }
   }
   fclose(fp);
+}
+
+void modificacionRegistro (Lista lista) {
+  int posicion;
+  do {
+    printf("Ingrese la posicion del registro a modificar: ");
+    scanf("%d", &posicion);
+    if (posicion >= 0) {
+      bool posValida = mostrarAtributos(lista, posicion);
+      if (!posValida) {
+        printf("La posicion es invalida\n");
+        posicion = -1;
+      } else {
+        char si;
+        do {
+          printf("Este es el registro a modificar, esta seguro que lo quiere modificar?(s/n): ");
+          scanf(" %c", &si);
+          if (si != 's' && si != 'n') {
+            printf("La opcion es invalida\n");
+          }
+        } while (si != 's' && si != 'n');
+        if (si == 'n') {
+          posicion = -1;
+        }
+      }
+    }
+  } while (posicion < 0);
+
+  int campo;
+  do {
+    printf("Ingrese el atributo que quiere modificar:\n");
+    mostrarCampos(lista);
+    scanf("%d", &campo);
+    if (campo < 0 || campo >= l_longitud(lista)) {
+      printf("Opcion invalida\n");
+    }
+  } while (campo < 0 || campo >= l_longitud(lista));
+  FILE * fp = fopen("registros.dat", "rb+");
+  int sizeCampo = 0;
+  int sizeAtributo;
+  Iterador ite = iterador(lista);
+  TipoElemento elemento;
+  int i;
+  for (i = 0;i <= campo;i++) {
+    elemento = siguiente(ite);
+    struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
+    if (i != campo) {
+      sizeCampo += (sizeof(char) * registro->cantidad);
+    } else {
+      sizeAtributo = (sizeof(char) * registro->cantidad);
+    }
+  }
+  char * atributo = malloc(sizeAtributo);
+  printf("Ingrese el valor: ");
+  scanf("%s", atributo);
+  fseek(fp, (tamanioRegistro(lista) * posicion) + sizeCampo, SEEK_SET);
+  fwrite(atributo, sizeAtributo, 1, fp);
+  fclose(fp);
+}
+
+void mostrarCampos (Lista lista) {
+  Iterador ite = iterador(lista);
+  TipoElemento elemento;
+  int i = 0;
+  while (hay_siguiente(ite)) {
+    elemento = siguiente(ite);
+    struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
+    printf("%d_ %s\n", i, registro->nombre);
+    i++;
+  }
+}
+
+bool mostrarAtributos (Lista lista, int posicion) {
+  TipoElemento elemento;
+  Iterador ite = iterador(lista);
+  FILE * fp = fopen("registros.dat", "rb");
+  int size = tamanioRegistro(lista);
+  fseek(fp, 0, SEEK_END);
+  long sizeFile = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  int cantidad = sizeFile / (size * sizeof(char));
+
+  if (cantidad <= posicion) {
+    fclose(fp);
+    return false;
+  }
+  
+  fseek(fp, size * posicion, SEEK_SET);
+  ite = iterador(lista);
+  char * campo;
+  while (hay_siguiente(ite)) {
+    elemento = siguiente(ite);
+    struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
+    campo = malloc(sizeof(char) * registro->cantidad + 1);
+    fread(campo, sizeof(char) * registro->cantidad, 1, fp);
+    printf("%s: %s\n", registro->nombre, campo);
+    free(campo);
+  }
+  fclose(fp);
+  return true;
+}
+
+int tamanioRegistro (Lista lista) {
+  Iterador ite = iterador(lista);
+  TipoElemento elemento;
+  int size = 0;
+  while (hay_siguiente(ite)) {
+    elemento = siguiente(ite);
+    struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
+    size += (registro->cantidad * sizeof(char));
+  }
+  return size;
 }
