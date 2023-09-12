@@ -3,9 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef _WIN32
+#include <conio.h>
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 #include "tipo_elemento.c"
 #include "listasArray.c"
 #include "tipoRegistro.h"
+#include "validaciones.c"
 
 void menuCampo ();
 void menuRegistro ();
@@ -17,11 +24,9 @@ void mostrarCampos (Lista lista);
 bool mostrarAtributos (Lista lista, int posicion);
 int tamanioRegistro (Lista lista);
 Lista listaCampos ();
+void limpiar_pantalla();
 
 int main () {
-  printf("uploading branch");
-  printf("uploading branch");
-  printf("uploading branch");
   FILE * fp = fopen("metadata.dat", "rb");
   if (!fp) {
     menuCampo();
@@ -34,34 +39,34 @@ int main () {
 void menuCampo () {
   int cantidad;
   printf("Cantidad de campos: ");
-  scanf("%d", &cantidad);
+  pedirDatos(&cantidad, 11);
   printf("\n");
   int i = 0;
   struct TipoRegistro reg[20];
   char nombre[30];
   while (i < cantidad) {
     printf("\nIngrese el nombre del campo: ");
-    scanf("%s", nombre);
+    pedirChar(nombre);
     strcpy(reg[i].nombre, nombre);
-    printf("\nIngrese el cantidad de caracteres del campo: ");
-    scanf("%d", &(reg[i].cantidad));
+    printf("\nIngrese la cantidad de caracteres del campo: ");
+    pedirDatos(&reg[i].cantidad, 11);
     i++;
-  }
-  for (i = 0;i < cantidad;i++) {
-    printf("%d %s", reg[i].cantidad, reg[i].nombre);
   }
   FILE * fp = fopen("metadata.dat", "wb");
   fwrite(reg, sizeof(struct TipoRegistro), cantidad, fp);
-};
+  printf("Campos creados exitosamente.");
+  fclose(fp);
+}
 
 void menuRegistro () {
   int opcion;
 
   Lista campos = listaCampos();
 
-  l_mostrarLista(campos);
 
   do {
+    limpiar_pantalla();
+    l_mostrarLista(campos);
     printf("Elija la opcion\n");
     printf("1: Agregar registro\n");
     printf("2: Eliminar registro\n");
@@ -335,4 +340,15 @@ void bajaRegistro (Lista lista) {
   remove("registros.dat");
   
   rename("temp.dat", "registros.dat");
+}
+
+// funcion para detectar el so y limpiar la terminal
+void limpiar_pantalla() {
+#ifdef _WIN32
+    sleep(2000);
+    system("cls");
+#else
+    sleep(2);
+    system("clear");
+#endif
 }
