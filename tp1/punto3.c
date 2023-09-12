@@ -19,6 +19,7 @@ int tamanioRegistro (Lista lista);
 Lista listaCampos ();
 
 int main () {
+  printf("uploading branch");
   FILE * fp = fopen("metadata.dat", "rb");
   if (!fp) {
     menuCampo();
