@@ -20,6 +20,8 @@ Lista listaCampos ();
 
 int main () {
   printf("uploading branch");
+  printf("uploading branch");
+  printf("uploading branch");
   FILE * fp = fopen("metadata.dat", "rb");
   if (!fp) {
     menuCampo();
