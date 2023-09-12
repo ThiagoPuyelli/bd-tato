@@ -25,6 +25,7 @@ bool mostrarAtributos (Lista lista, int posicion);
 int tamanioRegistro (Lista lista);
 Lista listaCampos ();
 void limpiar_pantalla();
+char *validarRango(int cantidad);
 
 int main () {
   FILE * fp = fopen("metadata.dat", "rb");
@@ -65,7 +66,7 @@ void menuRegistro () {
 
 
   do {
-    limpiar_pantalla();
+    //limpiar_pantalla();
     l_mostrarLista(campos);
     printf("Elija la opcion\n");
     printf("1: Agregar registro\n");
@@ -131,7 +132,9 @@ void altaRegistro (Lista lista) {
     struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
     printf("Ingrese el %s\n", registro->nombre);
     campos[i] = malloc(sizeof(char) * (registro->cantidad + 1));
-    scanf("%s", campos[i]);
+    //scanf("%s", campos[i]);
+    campos[i] = validarRango(registro->cantidad);
+    printf("valor: %s\n", campos[i]);
     i++;
   }
   FILE * fp = fopen("registros.dat", "ab");
@@ -156,12 +159,12 @@ void mostrarRegistros (Lista lista) {
     int cantidad = sizeFile / (size * sizeof(char));
     Iterador ite = iterador(lista);
     char * campo;
-    int i = 0;
     for (int i = 0;i < cantidad;i++) {
       while (hay_siguiente(ite)) {
         elemento = siguiente(ite);
         struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
-        campo = malloc(sizeof(char) * registro->cantidad + 1);
+        //campo = malloc(sizeof(char) * registro->cantidad + 1);
+        campo = calloc(registro->cantidad + 1, sizeof(char));
         fread(campo, sizeof(char) * registro->cantidad, 1, fp);
         printf("%s: %s\n", registro->nombre, campo);
         free(campo);
@@ -352,4 +355,16 @@ void limpiar_pantalla() {
     sleep(2);
     system("clear");
 #endif
+}
+
+char *validarRango(int cantidad) {
+  char *str = (char *)calloc(cantidad, sizeof(char));
+  int longitud = 0;
+  do {
+    scanf("%s", str);
+    longitud = strlen(str);
+    if (longitud > cantidad)
+      printf("La cantidad de caracteres supera a la maxima (%d)", cantidad);
+  } while (longitud < 0 || longitud > cantidad);
+  return str;
 }
