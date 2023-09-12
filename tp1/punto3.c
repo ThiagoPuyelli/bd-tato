@@ -73,7 +73,7 @@ void menuRegistro () {
     printf("3: Modificar registro\n");
     printf("4: Mostrar registros\n");
     printf("5: Salir\n");
-    scanf("%d", &opcion);
+    pedirDatos(&opcion, 11);
     switch (opcion){
       case 1:
         altaRegistro(campos);
@@ -89,6 +89,7 @@ void menuRegistro () {
         break;
       case 5:
         printf("Saliste del programa");
+        break;
       default:
         printf("Input invalido\n");
     }
@@ -320,7 +321,7 @@ void bajaRegistro (Lista lista) {
   int cantidad = sizeFile / (size * sizeof(char));
   Iterador ite = iterador(lista);
   char * campo;
-  int i = 0;
+  //int i = 0;
   for (int i = 0;i < cantidad;i++) {
     while (hay_siguiente(ite)) {
       elemento = siguiente(ite);
