@@ -10,7 +10,7 @@
 void menuCampo ();
 void menuRegistro ();
 void altaRegistro (Lista lista);
-void bajaRegistro ();
+void bajaRegistro (Lista lista);
 void modificacionRegistro (Lista lista);
 void mostrarRegistros (Lista lista);
 void mostrarCampos (Lista lista);
@@ -38,7 +38,7 @@ void menuCampo () {
   char nombre[30];
   while (i < cantidad) {
     printf("\nIngrese el nombre del campo: ");
-    scanf("%s", &nombre);
+    scanf("%s", nombre);
     strcpy(reg[i].nombre, nombre);
     printf("\nIngrese el cantidad de caracteres del campo: ");
     scanf("%d", &(reg[i].cantidad));
@@ -71,7 +71,7 @@ void menuRegistro () {
         altaRegistro(campos);
         break;
       case 2:
-        //bajaRegistro();
+        bajaRegistro(campos);
         break;
       case 3:
         modificacionRegistro(campos);
@@ -159,8 +159,8 @@ void mostrarRegistros (Lista lista) {
       }
       ite = iterador(lista);
     }
+    fclose(fp);
   }
-  fclose(fp);
 }
 
 void modificacionRegistro (Lista lista) {
@@ -273,4 +273,63 @@ int tamanioRegistro (Lista lista) {
     size += (registro->cantidad * sizeof(char));
   }
   return size;
+}
+
+void bajaRegistro (Lista lista) {
+  int posicion;
+  do {
+    printf("Ingrese la posicion del registro a eliminar: ");
+    scanf("%d", &posicion);
+    if (posicion >= 0) {
+      bool posValida = mostrarAtributos(lista, posicion);
+      if (!posValida) {
+        printf("La posicion es invalida\n");
+        posicion = -1;
+      } else {
+        char si;
+        do {
+          printf("Este es el registro a eliminar, esta seguro que lo quiere eliminar?(s/n): ");
+          scanf(" %c", &si);
+          if (si != 's' && si != 'n') {
+            printf("La opcion es invalida\n");
+          }
+        } while (si != 's' && si != 'n');
+        if (si == 'n') {
+          posicion = -1;
+        }
+      }
+    }
+  } while (posicion < 0);
+
+  FILE * original = fopen("registros.dat", "rb");
+  FILE * temp = fopen("temp.dat", "ab");
+
+  TipoElemento elemento;
+  int size = tamanioRegistro(lista);
+  fseek(original, 0, SEEK_END);
+  long sizeFile = ftell(original);
+  fseek(original, 0, SEEK_SET);
+  int cantidad = sizeFile / (size * sizeof(char));
+  Iterador ite = iterador(lista);
+  char * campo;
+  int i = 0;
+  for (int i = 0;i < cantidad;i++) {
+    while (hay_siguiente(ite)) {
+      elemento = siguiente(ite);
+      struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
+      campo = malloc(sizeof(char) * registro->cantidad + 1);
+      fread(campo, sizeof(char) * registro->cantidad, 1, original);
+      if (i != posicion) {
+        fwrite(campo, sizeof(char) * registro->cantidad, 1, temp);
+      }
+      free(campo);
+    }
+    ite = iterador(lista);
+  }
+  fclose(original);
+  fclose(temp);
+  
+  remove("registros.dat");
+  
+  rename("temp.dat", "registros.dat");
 }
