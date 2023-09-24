@@ -38,18 +38,18 @@ int main () {
 }
 
 void menuCampo () {
+  printf("Ingrese la estructura del archivo\n");
   int cantidad;
   printf("Cantidad de campos: ");
   pedirDatos(&cantidad, 11);
-  printf("\n");
   int i = 0;
   struct TipoRegistro reg[20];
   char nombre[30];
   while (i < cantidad) {
-    printf("\nIngrese el nombre del campo: ");
+    printf("\nIngrese el nombre del campo (max 30): ");
     pedirChar(nombre);
     strcpy(reg[i].nombre, nombre);
-    printf("\nIngrese la cantidad de caracteres del campo: ");
+    printf("\nIngrese la cantidad de caracteres del campo (max 30): ");
     pedirDatos(&reg[i].cantidad, 11);
     i++;
   }
@@ -130,7 +130,7 @@ void altaRegistro (Lista lista) {
   while (hay_siguiente(ite)) {
     elemento = siguiente(ite);
     struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
-    printf("Ingrese el %s\n", registro->nombre);
+    printf("Ingrese el %s: ", registro->nombre);
     campos[i] = malloc(sizeof(char) * (registro->cantidad + 1));
     //scanf("%s", campos[i]);
     campos[i] = validarRango(registro->cantidad);
@@ -166,11 +166,14 @@ void mostrarRegistros (Lista lista) {
         //campo = malloc(sizeof(char) * registro->cantidad + 1);
         campo = calloc(registro->cantidad + 1, sizeof(char));
         fread(campo, sizeof(char) * registro->cantidad, 1, fp);
-        printf("%s: %s\n", registro->nombre, campo);
+        printf("    |--------------------------------|--------------------------------|\n");
+        printf("%d_  | %-30s | %-30s |\n", i, registro->nombre, campo);
+        //printf("%s: %s\n", registro->nombre, campo);
         free(campo);
       }
       ite = iterador(lista);
     }
+    printf("    |--------------------------------|--------------------------------|\n");
     fclose(fp);
   }
 }
@@ -344,17 +347,6 @@ void bajaRegistro (Lista lista) {
   remove("registros.dat");
   
   rename("temp.dat", "registros.dat");
-}
-
-// funcion para detectar el so y limpiar la terminal
-void limpiar_pantalla() {
-#ifdef _WIN32
-    sleep(2000);
-    system("cls");
-#else
-    sleep(2);
-    system("clear");
-#endif
 }
 
 char *validarRango(int cantidad) {

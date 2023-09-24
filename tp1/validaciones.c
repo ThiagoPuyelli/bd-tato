@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define MAXIMA 20
+#define MAXIMA 30
 
 bool conversionCharPunto4(char *);
 
@@ -102,14 +102,12 @@ void strtrim(char *cadena) {
 bool conversionCharPunto4(char *string) {
     int tamanio=strlen(string)-1;   //consigo el tamanio del array para usarlo en el for y saber si está vacia o no
     if(tamanio>=MAXIMA){
-        printf("Dato demasiado grande.\n");
         return false;
     }
     int i=0;
 
     string[tamanio]='\0'; //quito el \n puesto por el fgets en la ultima linea
     if(strlen(string)==0){
-        printf(" Cadena vacia no es valida.\n"); //Compruebo que no sea una cadena vacia antes de seguir
         return false;
     }
 
