@@ -3,9 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef _WIN32
+#include <conio.h>
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 #include "tipo_elemento.c"
 #include "listasArray.c"
 #include "tipoRegistro.h"
+#include "validaciones.c"
 
 void menuCampo ();
 void menuRegistro ();
@@ -17,6 +24,8 @@ void mostrarCampos (Lista lista);
 bool mostrarAtributos (Lista lista, int posicion);
 int tamanioRegistro (Lista lista);
 Lista listaCampos ();
+void limpiar_pantalla();
+char *validarRango(int cantidad);
 
 int main () {
   FILE * fp = fopen("metadata.dat", "rb");
@@ -29,43 +38,43 @@ int main () {
 }
 
 void menuCampo () {
+  printf("Ingrese la estructura del archivo\n");
   int cantidad;
   printf("Cantidad de campos: ");
-  scanf("%d", &cantidad);
-  printf("\n");
+  pedirDatos(&cantidad, 11);
   int i = 0;
   struct TipoRegistro reg[20];
   char nombre[30];
   while (i < cantidad) {
-    printf("\nIngrese el nombre del campo: ");
-    scanf("%s", nombre);
+    printf("\nIngrese el nombre del campo (max 30): ");
+    pedirChar(nombre);
     strcpy(reg[i].nombre, nombre);
-    printf("\nIngrese el cantidad de caracteres del campo: ");
-    scanf("%d", &(reg[i].cantidad));
+    printf("\nIngrese la cantidad de caracteres del campo (max 30): ");
+    pedirDatos(&reg[i].cantidad, 11);
     i++;
-  }
-  for (i = 0;i < cantidad;i++) {
-    printf("%d %s", reg[i].cantidad, reg[i].nombre);
   }
   FILE * fp = fopen("metadata.dat", "wb");
   fwrite(reg, sizeof(struct TipoRegistro), cantidad, fp);
-};
+  printf("Campos creados exitosamente.");
+  fclose(fp);
+}
 
 void menuRegistro () {
   int opcion;
 
   Lista campos = listaCampos();
 
-  l_mostrarLista(campos);
 
   do {
+    //limpiar_pantalla();
+    l_mostrarLista(campos);
     printf("Elija la opcion\n");
     printf("1: Agregar registro\n");
     printf("2: Eliminar registro\n");
     printf("3: Modificar registro\n");
     printf("4: Mostrar registros\n");
     printf("5: Salir\n");
-    scanf("%d", &opcion);
+    pedirDatos(&opcion, 11);
     switch (opcion){
       case 1:
         altaRegistro(campos);
@@ -81,6 +90,7 @@ void menuRegistro () {
         break;
       case 5:
         printf("Saliste del programa");
+        break;
       default:
         printf("Input invalido\n");
     }
@@ -120,9 +130,11 @@ void altaRegistro (Lista lista) {
   while (hay_siguiente(ite)) {
     elemento = siguiente(ite);
     struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
-    printf("Ingrese el %s\n", registro->nombre);
+    printf("Ingrese el %s: ", registro->nombre);
     campos[i] = malloc(sizeof(char) * (registro->cantidad + 1));
-    scanf("%s", campos[i]);
+    //scanf("%s", campos[i]);
+    campos[i] = validarRango(registro->cantidad);
+    printf("valor: %s\n", campos[i]);
     i++;
   }
   FILE * fp = fopen("registros.dat", "ab");
@@ -147,18 +159,21 @@ void mostrarRegistros (Lista lista) {
     int cantidad = sizeFile / (size * sizeof(char));
     Iterador ite = iterador(lista);
     char * campo;
-    int i = 0;
     for (int i = 0;i < cantidad;i++) {
       while (hay_siguiente(ite)) {
         elemento = siguiente(ite);
         struct TipoRegistro *registro = (struct TipoRegistro*)(elemento->valor);
-        campo = malloc(sizeof(char) * registro->cantidad + 1);
+        //campo = malloc(sizeof(char) * registro->cantidad + 1);
+        campo = calloc(registro->cantidad + 1, sizeof(char));
         fread(campo, sizeof(char) * registro->cantidad, 1, fp);
-        printf("%s: %s\n", registro->nombre, campo);
+        printf("    |--------------------------------|--------------------------------|\n");
+        printf("%d_  | %-30s | %-30s |\n", i, registro->nombre, campo);
+        //printf("%s: %s\n", registro->nombre, campo);
         free(campo);
       }
       ite = iterador(lista);
     }
+    printf("    |--------------------------------|--------------------------------|\n");
     fclose(fp);
   }
 }
@@ -312,7 +327,7 @@ void bajaRegistro (Lista lista) {
   int cantidad = sizeFile / (size * sizeof(char));
   Iterador ite = iterador(lista);
   char * campo;
-  int i = 0;
+  //int i = 0;
   for (int i = 0;i < cantidad;i++) {
     while (hay_siguiente(ite)) {
       elemento = siguiente(ite);
@@ -332,4 +347,16 @@ void bajaRegistro (Lista lista) {
   remove("registros.dat");
   
   rename("temp.dat", "registros.dat");
+}
+
+char *validarRango(int cantidad) {
+  char *str = (char *)calloc(cantidad, sizeof(char));
+  int longitud = 0;
+  do {
+    scanf("%s", str);
+    longitud = strlen(str);
+    if (longitud > cantidad)
+      printf("La cantidad de caracteres supera a la maxima (%d)", cantidad);
+  } while (longitud < 0 || longitud > cantidad);
+  return str;
 }

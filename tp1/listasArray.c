@@ -115,10 +115,10 @@ TipoElemento l_recuperar(Lista lista, int pos){
 
 //Objetivo: Muestra las claves de lista en la pantalla.
 void l_mostrarLista(Lista lista){
-    printf("Campos:\n");
+    printf("Campos de archivo:\n");
     for (int i = 0; i < l_longitud(lista); i++){
-        struct TipoRegistro *registro = (struct TipoRegistro*)(lista->valores[i]->valor);
-        printf("%s %d\n", (*registro).nombre, (*registro).cantidad);
+        struct TipoRegistro registro = *(struct TipoRegistro*)(lista->valores[i]->valor);
+        printf("\n%d_\nNombre: %s\nCantidad de caracteres: %d\n", i + 1, (registro).nombre, (registro).cantidad);
     }
     printf("\n");
 }
